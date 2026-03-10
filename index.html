@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mijn Dagboek</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --nacht: #1a1535;
+    --dag: #f5e6c8;
+    --avond: #2d1b4e;
+    --ink: #1c1c2e;
+    --cream: #faf7f0;
+    --gold: #c9a84c;
+    --rose: #e8a598;
+    --sage: #8aab8a;
+    --mist: #b8c4d4;
+    --text: #2c2c3e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    padding: 28px 40px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid var(--gold);
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--cream);
+    letter-spacing: 0.02em;
+  }
+
+  header h1 span { color: var(--gold); font-style: italic; }
+
+  .date-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .date-nav button {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--cream);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .date-nav button:hover { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+
+  #current-date {
+    font-family: 'Playfair Display', serif;
+    color: var(--cream);
+    font-size: 1rem;
+    min-width: 160px;
+    text-align: center;
+  }
+
+  /* NAV TABS */
+  .tabs {
+    display: flex;
+    background: var(--ink);
+    padding: 0 40px;
+    gap: 2px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .tab {
+    padding: 12px 24px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.45);
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+
+  .tab:hover { color: rgba(255,255,255,0.8); }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* MAIN LAYOUT */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* DAGDELEN */
+  .dagdeel-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .dagdeel-card {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    transition: transform 0.2s;
+  }
+  .dagdeel-card:hover { transform: translateY(-2px); }
+
+  .dagdeel-header {
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .dagdeel-icon { font-size: 1.8rem; }
+
+  .dagdeel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: white;
+  }
+
+  .dagdeel-time {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* Nacht */
+  .nacht .dagdeel-header { background: linear-gradient(135deg, #1a1535 0%, #2d2060 100%); }
+  .nacht .dagdeel-body { background: #f0eef8; }
+
+  /* Dag */
+  .dag .dagdeel-header { background: linear-gradient(135deg, #c9a84c 0%, #e8c97a 100%); }
+  .dag .dagdeel-body { background: #fdf8ec; }
+
+  /* Avond */
+  .avond .dagdeel-header { background: linear-gradient(135deg, #2d1b4e 0%, #4a2d7a 100%); }
+  .avond .dagdeel-body { background: #f2eef8; }
+
+  .dagdeel-body { padding: 24px 28px; }
+
+  /* MOOD SELECTOR */
+  .mood-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #888;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .mood-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .mood-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    background: white;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .mood-btn:hover { transform: scale(1.08); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+  .mood-btn.selected {
+    border-color: var(--gold);
+    background: #fff8e6;
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(201,168,76,0.25);
+  }
+
+  .mood-emoji { font-size: 1.6rem; }
+  .mood-name { font-size: 0.65rem; color: #666; font-weight: 500; }
+
+  /* SLIDER */
+  .energy-row {
+    margin-bottom: 20px;
+  }
+
+  .slider-track {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .slider-track input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, #e8a598, #c9a84c, #8aab8a);
+    outline: none;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  .slider-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    min-width: 28px;
+    text-align: center;
+    color: var(--ink);
+  }
+
+  /* TEXTAREA */
+  .note-area {
+    width: 100%;
+    min-height: 90px;
+    border: 1.5px solid rgba(0,0,0,0.1);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    resize: vertical;
+    background: white;
+    color: var(--text);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .note-area:focus { border-color: var(--gold); }
+  .note-area::placeholder { color: #bbb; }
+
+  /* SAVE BTN */
+  .save-btn {
+    margin-top: 16px;
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    padding: 11px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .save-btn:hover { background: var(--gold); color: var(--ink); }
+  .save-btn.saved { background: var(--sage); }
+
+  /* ANALYSE VIEW */
+  .analyse-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+    color: var(--ink);
+  }
+
+  .analyse-sub {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 32px;
+  }
+
+  .analyse-period {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .period-btn {
+    padding: 8px 20px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(0,0,0,0.15);
+    background: white;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .period-btn.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+  .analyse-prompt-area {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  }
+
+  .analyse-prompt-area label {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #888;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .prompt-input {
+    width: 100%;
+    border: 1.5px solid rgba(0,0,0,0.1);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.2s;
+    color: var(--text);
+  }
+  .prompt-input:focus { border-color: var(--gold); }
+  .prompt-input::placeholder { color: #bbb; }
+
+  .analyse-btn {
+    margin-top: 14px;
+    background: linear-gradient(135deg, var(--ink) 0%, #3d3560 100%);
+    color: var(--cream);
+    border: none;
+    padding: 13px 32px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .analyse-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+  .analyse-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .result-box {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    border-left: 4px solid var(--gold);
+    line-height: 1.8;
+    font-size: 0.95rem;
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .result-box.visible { display: block; }
+
+  .result-box h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    margin-bottom: 14px;
+    color: var(--ink);
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* OVERZICHT VIEW */
+  .history-list { display: flex; flex-direction: column; gap: 16px; }
+
+  .history-item {
+    background: white;
+    border-radius: 14px;
+    padding: 20px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 4px solid transparent;
+  }
+  .history-item:hover { transform: translateX(4px); border-left-color: var(--gold); }
+
+  .history-date {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .history-moods {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .history-mood-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #666;
+    background: var(--cream);
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  .loading-dots span {
+    display: inline-block;
+    animation: blink 1.2s infinite;
+    font-size: 1.4rem;
+  }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+
+  .quick-prompts {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .quick-prompt {
+    background: var(--cream);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #555;
+  }
+  .quick-prompt:hover { background: var(--gold); color: white; border-color: var(--gold); }
+
+  .no-data {
+    text-align: center;
+    padding: 60px 20px;
+    color: #aaa;
+  }
+  .no-data p { font-size: 1rem; margin-top: 8px; }
+
+  /* Mood chart bars */
+  .mood-chart {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  }
+  .mood-chart h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+  .chart-bars { display: flex; flex-direction: column; gap: 10px; }
+  .chart-row { display: flex; align-items: center; gap: 12px; }
+  .chart-label { font-size: 0.8rem; color: #666; min-width: 80px; }
+  .chart-bar-wrap { flex: 1; background: #f0f0f0; border-radius: 6px; height: 28px; overflow: hidden; }
+  .chart-bar { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 10px; font-size: 0.75rem; color: white; font-weight: 500; transition: width 0.6s ease; }
+  .chart-val { font-size: 0.8rem; color: #666; min-width: 24px; text-align: right; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Mijn <span>Dagboek</span></h1>
+  <div class="date-nav">
+    <button onclick="changeDate(-1)">‹</button>
+    <div id="current-date"></div>
+    <button onclick="changeDate(1)">›</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showView('dagboek', this)">✦ Dag</div>
+  <div class="tab" onclick="showView('overzicht', this)">Overzicht</div>
+  <div class="tab" onclick="showView('analyse', this)">Analyse</div>
+</div>
+
+<main>
+
+  <!-- DAGBOEK VIEW -->
+  <div class="view active" id="view-dagboek">
+    <div class="dagdeel-grid">
+
+      <!-- NACHT -->
+      <div class="dagdeel-card nacht">
+        <div class="dagdeel-header">
+          <div class="dagdeel-icon">🌙</div>
+          <div>
+            <div class="dagdeel-title">Nacht & Ochtend</div>
+            <div class="dagdeel-time">00:00 – 09:00</div>
+          </div>
+        </div>
+        <div class="dagdeel-body">
+          <div class="mood-label">Hoe voel ik me?</div>
+          <div class="mood-row" id="mood-nacht">
+            <button class="mood-btn" data-mood="uitgerust" onclick="selectMood('nacht','uitgerust',this)"><span class="mood-emoji">😴</span><span class="mood-name">Uitgerust</span></button>
+            <button class="mood-btn" data-mood="moe" onclick="selectMood('nacht','moe',this)"><span class="mood-emoji">😪</span><span class="mood-name">Moe</span></button>
+            <button class="mood-btn" data-mood="kalm" onclick="selectMood('nacht','kalm',this)"><span class="mood-emoji">😌</span><span class="mood-name">Kalm</span></button>
+            <button class="mood-btn" data-mood="angstig" onclick="selectMood('nacht','angstig',this)"><span class="mood-emoji">😰</span><span class="mood-name">Angstig</span></button>
+            <button class="mood-btn" data-mood="blij" onclick="selectMood('nacht','blij',this)"><span class="mood-emoji">😊</span><span class="mood-name">Blij</span></button>
+          </div>
+          <div class="energy-row">
+            <div class="mood-label">Energieniveau</div>
+            <div class="slider-track">
+              <span style="font-size:0.85rem;color:#888">Laag</span>
+              <input type="range" min="1" max="10" value="5" id="energy-nacht" oninput="document.getElementById('eval-nacht').textContent=this.value">
+              <span class="slider-val" id="eval-nacht">5</span>
+              <span style="font-size:0.85rem;color:#888">Hoog</span>
+            </div>
+          </div>
+          <div class="mood-label">Notities & aantekeningen</div>
+          <textarea class="note-area" id="note-nacht" placeholder="Hoe heb ik geslapen? Dromen? Gedachten bij het opstaan…"></textarea>
+          <button class="save-btn" onclick="saveDagdeel('nacht')">💾 Opslaan</button>
+        </div>
+      </div>
+
+      <!-- DAG -->
+      <div class="dagdeel-card dag">
+        <div class="dagdeel-header">
+          <div class="dagdeel-icon">☀️</div>
+          <div>
+            <div class="dagdeel-title">Dag</div>
+            <div class="dagdeel-time">09:00 – 18:00</div>
+          </div>
+        </div>
+        <div class="dagdeel-body">
+          <div class="mood-label">Hoe voel ik me?</div>
+          <div class="mood-row" id="mood-dag">
+            <button class="mood-btn" data-mood="productief" onclick="selectMood('dag','productief',this)"><span class="mood-emoji">💪</span><span class="mood-name">Productief</span></button>
+            <button class="mood-btn" data-mood="gestrest" onclick="selectMood('dag','gestrest',this)"><span class="mood-emoji">😤</span><span class="mood-name">Gestrest</span></button>
+            <button class="mood-btn" data-mood="blij" onclick="selectMood('dag','blij',this)"><span class="mood-emoji">😄</span><span class="mood-name">Blij</span></button>
+            <button class="mood-btn" data-mood="verdrietig" onclick="selectMood('dag','verdrietig',this)"><span class="mood-emoji">😢</span><span class="mood-name">Verdrietig</span></button>
+            <button class="mood-btn" data-mood="gefocust" onclick="selectMood('dag','gefocust',this)"><span class="mood-emoji">🎯</span><span class="mood-name">Gefocust</span></button>
+            <button class="mood-btn" data-mood="verward" onclick="selectMood('dag','verward',this)"><span class="mood-emoji">😵</span><span class="mood-name">Verward</span></button>
+          </div>
+          <div class="energy-row">
+            <div class="mood-label">Energieniveau</div>
+            <div class="slider-track">
+              <span style="font-size:0.85rem;color:#888">Laag</span>
+              <input type="range" min="1" max="10" value="5" id="energy-dag" oninput="document.getElementById('eval-dag').textContent=this.value">
+              <span class="slider-val" id="eval-dag">5</span>
+              <span style="font-size:0.85rem;color:#888">Hoog</span>
+            </div>
+          </div>
+          <div class="mood-label">Notities & aantekeningen</div>
+          <textarea class="note-area" id="note-dag" placeholder="Wat heb ik gedaan? Hoe ging het werk/school? Bijzonderheden…"></textarea>
+          <button class="save-btn" onclick="saveDagdeel('dag')">💾 Opslaan</button>
+        </div>
+      </div>
+
+      <!-- AVOND -->
+      <div class="dagdeel-card avond">
+        <div class="dagdeel-header">
+          <div class="dagdeel-icon">🌆</div>
+          <div>
+            <div class="dagdeel-title">Avond</div>
+            <div class="dagdeel-time">18:00 – 00:00</div>
+          </div>
+        </div>
+        <div class="dagdeel-body">
+          <div class="mood-label">Hoe voel ik me?</div>
+          <div class="mood-row" id="mood-avond">
+            <button class="mood-btn" data-mood="ontspannen" onclick="selectMood('avond','ontspannen',this)"><span class="mood-emoji">🛋️</span><span class="mood-name">Ontspannen</span></button>
+            <button class="mood-btn" data-mood="reflectief" onclick="selectMood('avond','reflectief',this)"><span class="mood-emoji">🤔</span><span class="mood-name">Reflectief</span></button>
+            <button class="mood-btn" data-mood="dankbaar" onclick="selectMood('avond','dankbaar',this)"><span class="mood-emoji">🙏</span><span class="mood-name">Dankbaar</span></button>
+            <button class="mood-btn" data-mood="eenzaam" onclick="selectMood('avond','eenzaam',this)"><span class="mood-emoji">🌧️</span><span class="mood-name">Eenzaam</span></button>
+            <button class="mood-btn" data-mood="tevreden" onclick="selectMood('avond','tevreden',this)"><span class="mood-emoji">😎</span><span class="mood-name">Tevreden</span></button>
+          </div>
+          <div class="energy-row">
+            <div class="mood-label">Energieniveau</div>
+            <div class="slider-track">
+              <span style="font-size:0.85rem;color:#888">Laag</span>
+              <input type="range" min="1" max="10" value="5" id="energy-avond" oninput="document.getElementById('eval-avond').textContent=this.value">
+              <span class="slider-val" id="eval-avond">5</span>
+              <span style="font-size:0.85rem;color:#888">Hoog</span>
+            </div>
+          </div>
+          <div class="mood-label">Dagafsluiting & reflectie</div>
+          <textarea class="note-area" id="note-avond" placeholder="Hoe was mijn dag overall? Waar ben ik dankbaar voor? Wat neem ik mee naar morgen…"></textarea>
+          <button class="save-btn" onclick="saveDagdeel('avond')">💾 Opslaan</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- OVERZICHT VIEW -->
+  <div class="view" id="view-overzicht">
+    <div class="analyse-header">Overzicht</div>
+    <div class="analyse-sub">Bekijk eerdere dagboekdagen</div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+
+  <!-- ANALYSE VIEW -->
+  <div class="view" id="view-analyse">
+    <div class="analyse-header">AI Analyse</div>
+    <div class="analyse-sub">Stel vragen over je dagboek of laat patronen ontdekken</div>
+
+    <div class="analyse-period">
+      <button class="period-btn active" onclick="setPeriod(7, this)">Afgelopen week</button>
+      <button class="period-btn" onclick="setPeriod(14, this)">2 weken</button>
+      <button class="period-btn" onclick="setPeriod(30, this)">Maand</button>
+      <button class="period-btn" onclick="setPeriod(0, this)">Alles</button>
+    </div>
+
+    <div id="mood-chart-container"></div>
+
+    <div class="analyse-prompt-area">
+      <label>Stel een vraag of vraag om een analyse</label>
+      <textarea class="prompt-input" id="analyse-vraag" placeholder="Bijv: Wat zijn mijn beste en slechtste momenten van de week? Of: Zijn er patronen in mijn stemming?"></textarea>
+      <div class="quick-prompts">
+        <span class="quick-prompt" onclick="setPrompt('Wat zijn de opvallende patronen in mijn stemming?')">📊 Patronen</span>
+        <span class="quick-prompt" onclick="setPrompt('Wanneer voel ik me het beste en waarom?')">✨ Hoogtepunten</span>
+        <span class="quick-prompt" onclick="setPrompt('Geef me advies op basis van mijn dagboek')">💡 Advies</span>
+        <span class="quick-prompt" onclick="setPrompt('Wat zegt mijn energieniveau over mijn routine?')">⚡ Energie</span>
+        <span class="quick-prompt" onclick="setPrompt('Vat mijn afgelopen periode samen in een paar zinnen')">📝 Samenvatting</span>
+      </div>
+      <button class="analyse-btn" onclick="runAnalyse()" id="analyse-btn">
+        ✦ Analyseer mijn dagboek
+      </button>
+    </div>
+
+    <div class="result-box" id="analyse-result">
+      <h3>✦ Analyse</h3>
+      <div id="analyse-text"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // ── STATE ──
+  let currentDate = new Date();
+  let analysePeriod = 7;
+  const moods = { nacht: null, dag: null, avond: null };
+
+  // ── DATE ──
+  function fmtDate(d) {
+    return d.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  function dateKey(d) {
+    return d.toISOString().slice(0,10);
+  }
+  function changeDate(dir) {
+    currentDate.setDate(currentDate.getDate() + dir);
+    currentDate = new Date(currentDate);
+    document.getElementById('current-date').textContent = fmtDate(currentDate);
+    loadDayData();
+  }
+  document.getElementById('current-date').textContent = fmtDate(currentDate);
+
+  // ── STORAGE ──
+  function getStorage() {
+    try { return JSON.parse(localStorage.getItem('dagboek') || '{}'); } catch { return {}; }
+  }
+  function setStorage(data) {
+    localStorage.setItem('dagboek', JSON.stringify(data));
+  }
+
+  // ── LOAD DAY ──
+  function loadDayData() {
+    const all = getStorage();
+    const key = dateKey(currentDate);
+    const day = all[key] || {};
+    ['nacht','dag','avond'].forEach(dl => {
+      const data = day[dl] || {};
+      // mood
+      moods[dl] = data.mood || null;
+      document.querySelectorAll(`#mood-${dl} .mood-btn`).forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.mood === moods[dl]);
+      });
+      // energy
+      const e = document.getElementById(`energy-${dl}`);
+      const ev = document.getElementById(`eval-${dl}`);
+      e.value = data.energy || 5;
+      ev.textContent = e.value;
+      // note
+      document.getElementById(`note-${dl}`).value = data.note || '';
+    });
+  }
+  loadDayData();
+
+  // ── MOOD SELECT ──
+  function selectMood(dl, mood, btn) {
+    moods[dl] = mood;
+    document.querySelectorAll(`#mood-${dl} .mood-btn`).forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  // ── SAVE ──
+  function saveDagdeel(dl) {
+    const all = getStorage();
+    const key = dateKey(currentDate);
+    if (!all[key]) all[key] = {};
+    all[key][dl] = {
+      mood: moods[dl],
+      energy: document.getElementById(`energy-${dl}`).value,
+      note: document.getElementById(`note-${dl}`).value
+    };
+    setStorage(all);
+    const btn = event.target;
+    btn.textContent = '✓ Opgeslagen!';
+    btn.classList.add('saved');
+    setTimeout(() => {
+      btn.innerHTML = '💾 Opslaan';
+      btn.classList.remove('saved');
+    }, 2000);
+  }
+
+  // ── VIEWS ──
+  function showView(name, tab) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`view-${name}`).classList.add('active');
+    tab.classList.add('active');
+    if (name === 'overzicht') renderHistory();
+    if (name === 'analyse') renderChart();
+  }
+
+  // ── HISTORY ──
+  const moodEmojis = {
+    uitgerust:'😴', moe:'😪', kalm:'😌', angstig:'😰', blij:'😊',
+    productief:'💪', gestrest:'😤', verdrietig:'😢', gefocust:'🎯', verward:'😵',
+    ontspannen:'🛋️', reflectief:'🤔', dankbaar:'🙏', eenzaam:'🌧️', tevreden:'😎', blij:'😄'
+  };
+
+  function renderHistory() {
+    const all = getStorage();
+    const list = document.getElementById('history-list');
+    const keys = Object.keys(all).sort((a,b) => b.localeCompare(a));
+    if (!keys.length) {
+      list.innerHTML = '<div class="no-data">📖<p>Nog geen dagboekentries gevonden.<br>Begin met het invullen van vandaag!</p></div>';
+      return;
+    }
+    list.innerHTML = keys.map(key => {
+      const day = all[key];
+      const d = new Date(key);
+      const label = d.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
+      const chips = ['nacht','dag','avond'].map(dl => {
+        const data = day[dl];
+        if (!data) return '';
+        const icon = dl==='nacht'?'🌙':dl==='dag'?'☀️':'🌆';
+        const moodEmoji = data.mood ? (moodEmojis[data.mood]||'') : '—';
+        return `<div class="history-mood-chip">${icon} ${moodEmoji} ${data.mood||'geen stemming'} · ⚡${data.energy||'?'}</div>`;
+      }).join('');
+      return `<div class="history-item" onclick="jumpToDate('${key}')">
+        <div class="history-date">${label}</div>
+        <div class="history-moods">${chips||'<span style="color:#bbb;font-size:0.85rem">Geen data ingevuld</span>'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function jumpToDate(key) {
+    currentDate = new Date(key + 'T12:00:00');
+    document.getElementById('current-date').textContent = fmtDate(currentDate);
+    loadDayData();
+    showView('dagboek', document.querySelectorAll('.tab')[0]);
+  }
+
+  // ── ANALYSE ──
+  function setPeriod(days, btn) {
+    analysePeriod = days;
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderChart();
+  }
+
+  function getFilteredData() {
+    const all = getStorage();
+    if (analysePeriod === 0) return all;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - analysePeriod);
+    const out = {};
+    Object.keys(all).forEach(key => {
+      if (new Date(key) >= cutoff) out[key] = all[key];
+    });
+    return out;
+  }
+
+  function renderChart() {
+    const data = getFilteredData();
+    const container = document.getElementById('mood-chart-container');
+    const moodCounts = {};
+    let totalEnergy = {nacht:[], dag:[], avond:[]};
+
+    Object.values(data).forEach(day => {
+      ['nacht','dag','avond'].forEach(dl => {
+        if (day[dl]) {
+          if (day[dl].mood) moodCounts[day[dl].mood] = (moodCounts[day[dl].mood]||0)+1;
+          if (day[dl].energy) totalEnergy[dl].push(Number(day[dl].energy));
+        }
+      });
+    });
+
+    const topMoods = Object.entries(moodCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const maxCount = topMoods[0]?.[1] || 1;
+
+    const energyAvg = dl => totalEnergy[dl].length
+      ? (totalEnergy[dl].reduce((a,b)=>a+b,0)/totalEnergy[dl].length).toFixed(1)
+      : '—';
+
+    const barColors = ['#c9a84c','#8aab8a','#e8a598','#b8c4d4','#9b84cc'];
+
+    container.innerHTML = `
+      <div class="mood-chart">
+        <h3>📊 Meest voorkomende stemmingen</h3>
+        ${topMoods.length ? `<div class="chart-bars">
+          ${topMoods.map(([mood, count], i) => `
+            <div class="chart-row">
+              <div class="chart-label">${moodEmojis[mood]||''} ${mood}</div>
+              <div class="chart-bar-wrap">
+                <div class="chart-bar" style="width:${(count/maxCount*100)}%;background:${barColors[i]}">${count}x</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>` : '<p style="color:#bbb;font-size:0.9rem">Nog geen stemmingsdata</p>'}
+        <div style="margin-top:20px;display:flex;gap:20px;flex-wrap:wrap">
+          <div style="background:var(--cream);padding:12px 20px;border-radius:10px;font-size:0.85rem">🌙 Gem. energie nacht: <strong>${energyAvg('nacht')}</strong></div>
+          <div style="background:var(--cream);padding:12px 20px;border-radius:10px;font-size:0.85rem">☀️ Gem. energie dag: <strong>${energyAvg('dag')}</strong></div>
+          <div style="background:var(--cream);padding:12px 20px;border-radius:10px;font-size:0.85rem">🌆 Gem. energie avond: <strong>${energyAvg('avond')}</strong></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function setPrompt(text) {
+    document.getElementById('analyse-vraag').value = text;
+  }
+
+  async function runAnalyse() {
+    const vraag = document.getElementById('analyse-vraag').value.trim();
+    const btn = document.getElementById('analyse-btn');
+    const resultBox = document.getElementById('analyse-result');
+    const resultText = document.getElementById('analyse-text');
+    const data = getFilteredData();
+
+    if (!Object.keys(data).length) {
+      resultText.innerHTML = 'Er zijn nog geen dagboekentries om te analyseren. Begin eerst met het bijhouden van je dagboek!';
+      resultBox.classList.add('visible');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loading-dots"><span>•</span><span>•</span><span>•</span></div> Analyseren…';
+    resultBox.classList.add('visible');
+    resultText.innerHTML = '<div class="loading-dots"><span>•</span><span>•</span><span>•</span></div>';
+
+    // Build dagboek summary for Claude
+    const dagboekTekst = Object.entries(data).sort((a,b)=>a[0].localeCompare(b[0])).map(([key, day]) => {
+      const d = new Date(key).toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'});
+      const parts = ['nacht','dag','avond'].map(dl => {
+        const info = day[dl];
+        if (!info) return null;
+        const label = dl==='nacht'?'Nacht':dl==='dag'?'Dag':'Avond';
+        return `${label}: stemming=${info.mood||'niet ingevuld'}, energie=${info.energy||'?'}/10, notitie="${info.note||''}"`;
+      }).filter(Boolean).join(' | ');
+      return `${d}: ${parts}`;
+    }).join('\n');
+
+    const systemPrompt = `Je bent een empathische dagboekcoach die een persoonlijk dagboek analyseert. Geef een inzichtvolle, warme en eerlijke analyse in het Nederlands. Wees concreet en persoonlijk. Gebruik de data die je krijgt. Antwoord in maximaal 300 woorden. Gebruik korte alinea's.`;
+    const userMsg = `Hier is mijn dagboekdata:\n\n${dagboekTekst}\n\n${vraag || 'Analyseer mijn dagboek en geef inzichten over mijn stemming, energie en patronen.'}`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMsg }]
+        })
+      });
+
+      const d = await response.json();
+      const text = d.content?.map(c=>c.text||'').join('\n') || 'Geen antwoord ontvangen.';
+      resultText.innerHTML = text.replace(/\n/g, '<br>');
+    } catch (err) {
+      resultText.innerHTML = 'Er is iets misgegaan bij het ophalen van de analyse. Probeer het opnieuw.';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '✦ Analyseer mijn dagboek';
+  }
+</script>
+</body>
+</html>
